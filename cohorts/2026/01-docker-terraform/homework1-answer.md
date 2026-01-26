@@ -53,14 +53,15 @@ volumes:
     name: vol-pgadmin_data
 ```
 
-- **postgres:5433**
+- postgres:5433
 - localhost:5432
 - db:5433
-- postgres:5432
-- db:5432
+- **postgres:5432**
+- **db:5432**
 
 If multiple answers are correct, select any 
 
+Answer: postgres:5432 and db:5432
 
 ## Prepare the Data
 
@@ -81,10 +82,17 @@ wget https://github.com/DataTalksClub/nyc-tlc-data/releases/download/misc/taxi_z
 For the trips in November 2025 (lpep_pickup_datetime between '2025-11-01' and '2025-12-01', exclusive of the upper bound), how many trips had a `trip_distance` of less than or equal to 1 mile?
 
 - 7,853
-- 8,007
+- **8,007**
 - 8,254
 - 8,421
 
+Answer: 8,007
+```sql
+select count(*) 
+from green_tripdata
+where lpep_pickup_datetime between '2025-11-01' and '2025-12-01'
+and trip_distance <= 1.0
+```
 
 ## Question 4. Longest trip for each day
 
@@ -97,6 +105,16 @@ Use the pick up time for your calculations.
 - 2025-11-23
 - 2025-11-25
 
+Answer: 2025-11-14
+```sql
+select 
+  lpep_pickup_datetime,
+  trip_distance
+from green_tripdata
+where trip_distance <= 100
+order by trip_distance desc
+limit 1
+```
 
 ## Question 5. Biggest pickup zone
 
@@ -107,6 +125,20 @@ Which was the pickup zone with the largest `total_amount` (sum of all trips) on 
 - Morningside Heights
 - Forest Hills
 
+Answer: East Harlem North
+```sql
+select
+  g.PULocationID,
+  z.Zone,
+  sum(total_amount) as total_amount
+from green_tripdata g
+left join taxi_zone z on g.PULocationID = z.LocationID
+WHERE lpep_pickup_datetime >= '2025-11-18'
+   AND lpep_pickup_datetime <  '2025-11-19'
+group by 1,2,3
+order by total_amount desc
+limit 1   
+```
 
 ## Question 6. Largest tip
 
@@ -119,7 +151,23 @@ Note: it's `tip` , not `trip`. We need the name of the zone, not the ID.
 - East Harlem North
 - LaGuardia Airport
 
-
+Answer: Yorkville West
+```sql
+select
+  g.DOLocationID,
+  z2.Zone as drop_zone,
+  z1.Zone, 
+  max(g.tip_amount) as max_tip
+from green_tripdata g
+left join taxi_zone z1 on g.PULocationID = z1.LocationID
+left join taxi_zone z2 on  g.DOLocationID = z2.LocationID
+WHERE g.lpep_pickup_datetime >= '2025-11-01'
+     AND g.lpep_pickup_datetime <  '2025-12-01'
+     AND g.PULocationID = 74
+group by 1,2,3
+order by max(g.tip_amount) desc
+limit 1
+```
 ## Terraform
 
 In this section homework we'll prepare the environment by creating resources in GCP with Terraform.
@@ -142,7 +190,7 @@ Answers:
 - terraform import, terraform apply -y, terraform destroy
 - teraform init, terraform plan -auto-apply, terraform rm
 - terraform init, terraform run -auto-approve, terraform destroy
-- terraform init, terraform apply -auto-approve, terraform destroy
+- **terraform init, terraform apply -auto-approve, terraform destroy**
 - terraform import, terraform apply -y, terraform rm
 
 
